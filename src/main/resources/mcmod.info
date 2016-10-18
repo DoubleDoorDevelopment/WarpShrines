@@ -1,0 +1,19 @@
+[
+  {
+    "modid": "warpshrines",
+    "name": "WarpShrines",
+    "description": "A vanilla compatible warp mod",
+    "version": "${version}",
+    "mcversion": "${mcversion}",
+    "url": "doubledoordev.net",
+    "updateUrl": "http://doubledoordev.net/WarpShrines.json",
+    "authorList": [
+      "Dries007",
+      "Doubledoordev"
+    ],
+    "credits": "",
+    "logoFile": "",
+    "screenshots": [],
+    "dependencies": []
+  }
+]

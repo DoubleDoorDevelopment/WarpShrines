@@ -26,17 +26,16 @@ package net.doubledoordev.warpshrines.util;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.world.Teleporter;
+import net.minecraft.world.WorldServer;
 
 /**
  * @author Dries007
  */
 public class CustomTeleporter extends Teleporter
 {
-    public static final CustomTeleporter INSTANCE = new CustomTeleporter();
-
-    public CustomTeleporter()
+    public CustomTeleporter(WorldServer worldObj)
     {
-        super(null);
+        super(worldObj);
     }
 
     @Override

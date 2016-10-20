@@ -114,7 +114,7 @@ public class Helper
         }
     }
 
-    public static void addToWarpList(EntityPlayer player, String... names)
+    public static void addToWarpList(EntityPlayer player, Iterable<String> names)
     {
         NBTTagCompound root = player.getEntityData();
         NBTTagCompound persist = root.getCompoundTag(EntityPlayer.PERSISTED_NBT_TAG);

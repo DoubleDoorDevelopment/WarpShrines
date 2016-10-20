@@ -25,17 +25,16 @@
 package net.doubledoordev.warpshrines.util;
 
 import com.google.common.collect.ImmutableList;
+import gnu.trove.map.hash.TLongObjectHashMap;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
+import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldSavedData;
 import net.minecraftforge.common.util.Constants.NBT;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Dries007
@@ -43,6 +42,7 @@ import java.util.Map;
 public class WarpSavedData extends WorldSavedData
 {
     private final Map<String, WarpPoint> map = new HashMap<String, WarpPoint>();
+    private final TLongObjectHashMap<List<WarpPoint>> chunkShortcut = new TLongObjectHashMap<List<WarpPoint>>();
 
     @SuppressWarnings("WeakerAccess")
     public WarpSavedData(String name)
@@ -55,6 +55,10 @@ public class WarpSavedData extends WorldSavedData
         String name = wp.getName().toLowerCase();
         if (map.containsKey(name)) return false;
         map.put(name, wp);
+        long key = ChunkPos.asLong(wp.getPos().getX() >> 4, wp.getPos().getZ() >> 4);
+        List<WarpPoint> list = chunkShortcut.get(key);
+        if (list == null) chunkShortcut.put(key, list = new ArrayList<WarpPoint>());
+        list.add(wp);
         markDirty();
         return true;
     }
@@ -63,7 +67,11 @@ public class WarpSavedData extends WorldSavedData
     {
         name = name.toLowerCase();
         if (!map.containsKey(name)) return false;
-        map.remove(name);
+        WarpPoint wp = map.remove(name);
+        long key = ChunkPos.asLong(wp.getPos().getX() >> 4, wp.getPos().getZ() >> 4);
+        List<WarpPoint> list = chunkShortcut.get(key);
+        list.remove(wp);
+        if (list.isEmpty()) chunkShortcut.remove(key);
         markDirty();
         return true;
     }
@@ -90,14 +98,35 @@ public class WarpSavedData extends WorldSavedData
         return ImmutableList.copyOf(map.values());
     }
 
+    public boolean hasWarpsAround(int x, int z)
+    {
+        x >>= 4;
+        z >>= 4;
+        for (int xx = -1; xx <= 1; xx ++)
+            for (int zz = -1; zz <= 1; zz ++)
+                if (chunkShortcut.containsKey(ChunkPos.asLong(x + xx, z + zz))) return true;
+        return false;
+    }
+
+    public List<WarpPoint> getWarpsAround(int x, int z)
+    {
+        x >>= 4;
+        z >>= 4;
+        List<WarpPoint> out = new ArrayList<WarpPoint>();
+        for (int xx = -1; xx <= 1; xx ++)
+            for (int zz = -1; zz <= 1; zz ++)
+            {
+                List<WarpPoint> list = chunkShortcut.get(ChunkPos.asLong(x + xx, z + zz));
+                if (list != null) out.addAll(list);
+            }
+        return out;
+    }
+
     @Override
     public void readFromNBT(NBTTagCompound nbt)
     {
         NBTTagList list = nbt.getTagList(mapName, NBT.TAG_COMPOUND);
-        for (int i = 0; i < list.tagCount(); i++)
-        {
-            add(WarpPoint.fromNBT(list.getCompoundTagAt(i)));
-        }
+        for (int i = 0; i < list.tagCount(); i++) add(WarpPoint.fromNBT(list.getCompoundTagAt(i)));
     }
 
     @Override

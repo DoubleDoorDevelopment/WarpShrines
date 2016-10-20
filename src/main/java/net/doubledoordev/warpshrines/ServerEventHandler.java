@@ -24,6 +24,8 @@
 
 package net.doubledoordev.warpshrines;
 
+import net.doubledoordev.warpshrines.util.Constants;
+import net.doubledoordev.warpshrines.util.Helper;
 import net.doubledoordev.warpshrines.util.WarpPoint;
 import net.doubledoordev.warpshrines.util.WarpSavedData;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -33,7 +35,12 @@ import net.minecraft.world.WorldServer;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static net.doubledoordev.warpshrines.util.Constants.MOD_ID;
+import static net.minecraft.util.text.TextFormatting.GREEN;
+import static net.minecraft.util.text.TextFormatting.WHITE;
 
 /**
  * @author Dries007
@@ -49,7 +56,26 @@ public class ServerEventHandler
     {
         if (event.side.isClient() || event.phase == TickEvent.Phase.END) return;
 
-        //todo: discovering warps
+        WarpSavedData wsd = WarpSavedData.get(event.player);
+
+        if (wsd.hasWarpsAround((int) event.player.posX, (int) event.player.posZ))
+        {
+            List<WarpPoint> points = wsd.getWarpsAround((int) event.player.posX, (int) event.player.posZ);
+            List<String> names = Helper.getWarpList(event.player);
+            List<String> toAdd = new ArrayList<String>();
+            for (WarpPoint point : points) if (!names.contains(point.getName())) toAdd.add(point.getName());
+            int size = toAdd.size();
+            if (size == 1)
+            {
+                Helper.addToWarpList(event.player, toAdd);
+                Helper.chat(event.player, "You have discovered a warp point: " + WHITE + toAdd.get(0), GREEN);
+            }
+            else if (size > 1)
+            {
+                Helper.addToWarpList(event.player, toAdd);
+                Helper.chat(event.player, "You have discovered multiple warp points: " + WHITE + Constants.SPACE_JOINER.join(toAdd), GREEN);
+            }
+        }
 
         if (event.player.getEntityData().hasKey(MOD_ID))
         {
@@ -62,25 +88,12 @@ public class ServerEventHandler
             int particles = 20 * (MAX - time);
             if (time >= MAX)
             {
-                WarpPoint wp = WarpSavedData.get(player).get(root.getString("name"));
+                WarpPoint wp = wsd.get(root.getString("name"));
                 if (wp != null) wp.teleportNow(player);
                 event.player.getEntityData().removeTag(MOD_ID);
                 particles = 1000;
             }
-//            while (particles -- > 0)
-            {
-                double mX = world.rand.nextGaussian() * 0.02D;
-                double mY = world.rand.nextGaussian() * 0.02D;
-                double mZ = world.rand.nextGaussian() * 0.02D;
-
-                // public void spawnParticle(EnumParticleTypes particleType, boolean longDistance, double xCoord, double yCoord, double zCoord, int numberOfParticles, double xOffset, double yOffset, double zOffset, double particleSpeed, int... particleArguments)
-                world.spawnParticle(EnumParticleTypes.PORTAL, false, player.posX, player.posY, player.posZ, particles, mX, mY, mZ, 1F);
-
-//                if (world.rand.nextInt(particles) == 0)
-                {
-
-                }
-            }
+            world.spawnParticle(EnumParticleTypes.PORTAL, false, player.posX, player.posY, player.posZ, particles, world.rand.nextGaussian() * 0.02D, world.rand.nextGaussian() * 0.02D, world.rand.nextGaussian() * 0.02D, 1F);
         }
     }
 }

@@ -98,8 +98,10 @@ public class WarpCommand extends CommandBase
                 TextFormatting.GREEN + "ProTip: Use TAB to auto complete a command or warp name!",
                 "- help: Display this text.",
                 "- go [name]: Warp to a point.",
-                "- cost [name]: Found out the cost of warping.",
-                "- list: List of warps you have access too.",
+                "- cost [name]: Get the cost of warping to a point.",
+                "- list: List of warps you have access to.",
+                "- make [free?] [name...]: Make a new warp [OP]",
+                "- remove [name...]: Remove a warp [OP]",
         }) sender.addChatMessage(new TextComponentString(s));
     }
 
@@ -122,7 +124,11 @@ public class WarpCommand extends CommandBase
     {
         boolean op = sender.canCommandSenderUseCommand(1, getCommandName());
         Helper.chat(sender, op ? "All warps:" : "List of warps you have access too:", TextFormatting.AQUA);
-        for (String s : Helper.getWarpList(getCommandSenderAsPlayer(sender))) sender.addChatMessage(new TextComponentString(s));
+        for (String s : Helper.getWarpList(getCommandSenderAsPlayer(sender)))
+        {
+            WarpPoint wp = WarpSavedData.get(sender).get(s);
+            sender.addChatMessage(new TextComponentString(wp.getName() + (wp.isFree() ? " (free)" : (" (" + wp.getCost(getCommandSenderAsPlayer(sender)) + " xp)"))));
+        }
     }
 
     private void doMake(ICommandSender sender, String[] args) throws CommandException

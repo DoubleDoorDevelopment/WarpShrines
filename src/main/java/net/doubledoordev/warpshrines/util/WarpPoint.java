@@ -79,7 +79,7 @@ public class WarpPoint implements INBTSerializable<NBTTagCompound>
             player.worldObj.playSound(null, player.prevPosX, player.prevPosY, player.prevPosZ, SoundEvents.ENTITY_ENDERMEN_TELEPORT, player.getSoundCategory(), 1.0F, 1.0F);
             player.playSound(SoundEvents.ENTITY_ENDERMEN_TELEPORT, 1.0F, 1.0F);
             //noinspection ConstantConditions
-            player.getServer().getPlayerList().transferPlayerToDimension(player, dim, CustomTeleporter.INSTANCE);
+            player.getServer().getPlayerList().transferPlayerToDimension(player, dim, new CustomTeleporter(player.getServerWorld()));
         }
         player.worldObj.playSound(null, player.prevPosX, player.prevPosY, player.prevPosZ, SoundEvents.ENTITY_ENDERMEN_TELEPORT, player.getSoundCategory(), 1.0F, 1.0F);
         player.playSound(SoundEvents.ENTITY_ENDERMEN_TELEPORT, 1.0F, 1.0F);
@@ -94,7 +94,7 @@ public class WarpPoint implements INBTSerializable<NBTTagCompound>
             return false;
         }
         // canCommandSenderUseCommand because it does SSP check too
-        if (!free && !Helper.getWarpList(player).contains(name) && !player.canCommandSenderUseCommand(1, "warp"))
+        if (!Helper.getWarpList(player).contains(name) && !player.canCommandSenderUseCommand(1, "warp"))
         {
             Helper.chat(player, "You don't have access to this warp yet. Visit it first!", RED);
             return false;
@@ -115,6 +115,7 @@ public class WarpPoint implements INBTSerializable<NBTTagCompound>
         player.getEntityData().setTag(MOD_ID, root);
         player.addPotionEffect(new PotionEffect(MobEffects.NAUSEA, WarpShrines.getDelay() + (4 * 20), 3, false, false));
         player.addPotionEffect(new PotionEffect(MobEffects.BLINDNESS, WarpShrines.getDelay() + (2 * 20), 0, false, false));
+        player.addPotionEffect(new PotionEffect(MobEffects.SLOWNESS, WarpShrines.getDelay() + (2 * 20), 0, false, false));
 
         player.worldObj.playSound(null, player.prevPosX, player.prevPosY, player.prevPosZ, SoundEvents.BLOCK_PORTAL_TRIGGER, player.getSoundCategory(), 0.1F, 1.0F);
         player.playSound(SoundEvents.BLOCK_PORTAL_TRIGGER, 0.1F, 1.0F);
@@ -128,7 +129,9 @@ public class WarpPoint implements INBTSerializable<NBTTagCompound>
         NBTTagCompound root = new NBTTagCompound();
         root.setString("name", name);
         root.setInteger("dim", dim);
-        root.setLong("pos", pos.toLong());
+        root.setInteger("x", pos.getX());
+        root.setInteger("y", pos.getY());
+        root.setInteger("z", pos.getZ());
         root.setBoolean("free", free);
         return root;
     }
@@ -138,7 +141,8 @@ public class WarpPoint implements INBTSerializable<NBTTagCompound>
     {
         name = nbt.getString("name");
         dim = nbt.getInteger("dim");
-        pos = BlockPos.fromLong(nbt.getLong("pos"));
+        if (nbt.hasKey("pos")) pos = BlockPos.fromLong(nbt.getLong("pos"));
+        else pos = new BlockPos(nbt.getInteger("x"), nbt.getInteger("y"), nbt.getInteger("z"));
         free = nbt.getBoolean("free");
     }
 

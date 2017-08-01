@@ -57,6 +57,7 @@ public class WarpShrines
     private File costFile;
     private WarpCostConfig warpCostConfig;
     private int delay;
+    private boolean backPersists;
 
     @EventHandler
     public void preInit(FMLPreInitializationEvent event)
@@ -89,6 +90,7 @@ public class WarpShrines
     private void syncConfig(Configuration config)
     {
         delay = config.getInt("delay", MOD_ID, 20 * 5, 1, Integer.MAX_VALUE, "The time delay before warping. Also does the potion effect. In ticks.");
+        backPersists = config.getBoolean("backPersists", MOD_ID, false, "If true, your last warp will be remembered after death.");
         if (config.hasChanged()) config.save();
 
         try
@@ -114,6 +116,11 @@ public class WarpShrines
     public static int getDelay()
     {
         return instance.delay;
+    }
+
+    public static boolean doesBackPersists()
+    {
+        return instance.backPersists;
     }
 
     public static WarpCostConfig getWarpCostConfig()

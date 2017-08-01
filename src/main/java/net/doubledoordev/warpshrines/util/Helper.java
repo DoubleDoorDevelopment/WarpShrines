@@ -25,10 +25,12 @@
 package net.doubledoordev.warpshrines.util;
 
 import com.google.common.collect.Lists;
+import net.doubledoordev.warpshrines.WarpShrines;
 import net.minecraft.command.CommandResultStats;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.SoundEvents;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -171,5 +173,35 @@ public class Helper
     public static void chat(ICommandSender target, String message, TextFormatting color)
     {
         target.addChatMessage(new TextComponentString(message).setStyle(new Style().setColor(color)));
+    }
+
+    private static NBTTagCompound getBackTagParent(EntityPlayer player)
+    {
+        NBTTagCompound root = player.getEntityData();
+        if (WarpShrines.doesBackPersists())
+        {
+            NBTTagCompound persist = root.getCompoundTag(EntityPlayer.PERSISTED_NBT_TAG);
+            root.setTag(EntityPlayer.PERSISTED_NBT_TAG, persist);
+            root = persist;
+        }
+        return root;
+    }
+
+    public static WarpPoint getBackWarp(EntityPlayerMP player)
+    {
+        NBTTagCompound root = getBackTagParent(player);
+        if (!root.hasKey(Constants.NBT_KEY_BACK)) return null;
+        return WarpPoint.fromNBT(root.getCompoundTag(Constants.NBT_KEY_BACK));
+    }
+
+    public static void removeBackWarp(EntityPlayerMP player)
+    {
+        getBackTagParent(player).removeTag(Constants.NBT_KEY_BACK);
+    }
+
+    public static void setBackWarp(EntityPlayerMP player, boolean free)
+    {
+        NBTTagCompound root = getBackTagParent(player);
+        root.setTag(Constants.NBT_KEY_BACK, new WarpPoint(player, "Back", free).serializeNBT());
     }
 }

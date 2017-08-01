@@ -45,4 +45,6 @@ public class Constants
     public static final String BASE_FEE = "BaseFee";
     public static final String DISTANCE_FEE = "DistanceFee";
     public static final String ENTRY_FEE = "EntryFee";
+
+    public static final String NBT_KEY_BACK = MOD_ID + "_back";
 }

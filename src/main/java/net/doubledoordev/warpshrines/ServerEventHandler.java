@@ -88,8 +88,7 @@ public class ServerEventHandler
             int particles = 20 * (MAX - time);
             if (time >= MAX)
             {
-                WarpPoint wp = wsd.get(root.getString("name"));
-                if (wp != null) wp.teleportNow(player);
+                WarpPoint.fromNBT(root.getCompoundTag("warpPoint")).teleportNow(player, root.getBoolean("isBack"));
                 event.player.getEntityData().removeTag(MOD_ID);
                 particles = 1000;
             }

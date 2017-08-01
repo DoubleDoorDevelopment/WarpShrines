@@ -38,7 +38,10 @@ import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
 import java.util.List;
+
+import static net.minecraft.util.text.TextFormatting.RED;
 
 /**
  * @author Dries007
@@ -67,13 +70,23 @@ public class WarpCommand extends CommandBase
     public List<String> getTabCompletionOptions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos pos)
     {
         if (isUsernameIndex(args, args.length - 1)) return getListOfStringsMatchingLastWord(args, server.getAllUsernames());
-        else if (args.length == 1) return getListOfStringsMatchingLastWord(args, "help", "go", "cost", "list", "make", "remove");
+        else if (args.length == 1) return getListOfStringsMatchingLastWord(args, "help", "go", "back", "cost", "list", "make", "remove");
         else if (args.length == 2)
         {
-            if (args[0].equalsIgnoreCase("go") || args[0].equalsIgnoreCase("cost") || args[0].equalsIgnoreCase("remove"))
+            if (args[0].equalsIgnoreCase("go") || args[0].equalsIgnoreCase("remove"))
+            {
                 return getListOfStringsMatchingLastWord(args, Helper.getWarpList(((EntityPlayer) sender)));
+            }
+            else if (args[0].equalsIgnoreCase("cost"))
+            {
+                ArrayList<String> l = Helper.getWarpList(((EntityPlayer) sender));
+                l.add(0, "back");
+                return getListOfStringsMatchingLastWord(args, l);
+            }
             else if (args[0].equals("make"))
+            {
                 return getListOfStringsMatchingLastWord(args, "true", "false");
+            }
         }
         return super.getTabCompletionOptions(server, sender, args, pos);
     }
@@ -83,6 +96,7 @@ public class WarpCommand extends CommandBase
     {
         if (args.length == 0 || args[0].equalsIgnoreCase("help")) displayHelp(sender);
         else if (args[0].equalsIgnoreCase("go")) doGo(sender, args);
+        else if (args[0].equalsIgnoreCase("back")) doBack(sender, args);
         else if (args[0].equalsIgnoreCase("cost")) doCost(sender, args);
         else if (args[0].equalsIgnoreCase("list")) doList(sender, args);
         else if (args[0].equalsIgnoreCase("make")) doMake(sender, args);
@@ -97,8 +111,9 @@ public class WarpCommand extends CommandBase
                 TextFormatting.AQUA + getCommandName() + " sub command help:",
                 TextFormatting.GREEN + "ProTip: Use TAB to auto complete a command or warp name!",
                 "- help: Display this text.",
-                "- go [name]: Warp to a point.",
-                "- cost [name]: Get the cost of warping to a point.",
+                "- go [name...]: Warp to a point.",
+                "- back: Warp back to were you last warped from.",
+                "- cost [back|name...]: Get the cost of warping to a point.",
                 "- list: List of warps you have access to.",
                 "- make [free?] [name...]: Make a new warp [OP]",
                 "- remove [name...]: Remove a warp [OP]",
@@ -109,15 +124,37 @@ public class WarpCommand extends CommandBase
     {
         WarpPoint wp = WarpSavedData.get(sender).get(getName(sender, args, 1));
         if (wp == null) throw new CommandException("No warp by that name :(");
-        wp.queueTeleport(getCommandSenderAsPlayer(sender));
+        // canCommandSenderUseCommand because it does SSP check too
+        if (Helper.getWarpList(getCommandSenderAsPlayer(sender)).contains(wp.getName()))
+            wp.queueTeleport(getCommandSenderAsPlayer(sender), false);
+        else
+            Helper.chat(sender, "You don't have access to this warp yet. Visit it first!", RED);
+    }
+
+    private void doBack(ICommandSender sender, String[] args) throws CommandException
+    {
+        WarpPoint wp = Helper.getBackWarp(getCommandSenderAsPlayer(sender));
+        if (wp == null) throw new CommandException("No warp back available :(");
+        wp.queueTeleport(getCommandSenderAsPlayer(sender), true);
     }
 
     private void doCost(ICommandSender sender, String[] args) throws CommandException
     {
-        WarpPoint wp = WarpSavedData.get(sender).get(getName(sender, args, 1));
-        if (wp == null) throw new CommandException("No warp by that name :(");
-        int cost = wp.getCost(getCommandSenderAsPlayer(sender));
-        Helper.chat(sender, "Warp cost: " + cost + " xp or " + (Helper.getLevelForExperience(cost) + 1) + " levels.");
+        String warpName = getName(sender, args, 1);
+        if (warpName.equalsIgnoreCase("back"))
+        {
+            WarpPoint wp = Helper.getBackWarp(getCommandSenderAsPlayer(sender));
+            if (wp == null) throw new CommandException("No warp back available :(");
+            int cost = wp.getCost(getCommandSenderAsPlayer(sender));
+            Helper.chat(sender, "Warp cost: " + cost + " xp or " + (Helper.getLevelForExperience(cost) + 1) + " levels.");
+        }
+        else
+        {
+            WarpPoint wp = WarpSavedData.get(sender).get(warpName);
+            if (wp == null) throw new CommandException("No warp by that name :(");
+            int cost = wp.getCost(getCommandSenderAsPlayer(sender));
+            Helper.chat(sender, "Warp cost: " + cost + " xp or " + (Helper.getLevelForExperience(cost) + 1) + " levels.");
+        }
     }
 
     private void doList(ICommandSender sender, String[] args) throws CommandException

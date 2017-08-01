@@ -66,8 +66,13 @@ public class WarpPoint implements INBTSerializable<NBTTagCompound>
         return WarpShrines.getWarpCostConfig().calculateCost(new BlockPos(entity), entity.dimension, pos, dim);
     }
 
-    public void teleportNow(EntityPlayerMP player)
+    public void teleportNow(EntityPlayerMP player, boolean isBack)
     {
+        if (isBack)
+            Helper.removeBackWarp(player);
+        else
+            Helper.setBackWarp(player, free);
+
         if (player.dimension != dim)
         {
             // Code stolen from Entity.changeDimension(dim)
@@ -86,17 +91,11 @@ public class WarpPoint implements INBTSerializable<NBTTagCompound>
         player.setPositionAndUpdate(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
     }
 
-    public boolean queueTeleport(EntityPlayerMP player)
+    public boolean queueTeleport(EntityPlayerMP player, boolean isBack)
     {
         if (player.getEntityData().hasKey(MOD_ID))
         {
             Helper.chat(player, "Warp already in progress...", RED);
-            return false;
-        }
-        // canCommandSenderUseCommand because it does SSP check too
-        if (!Helper.getWarpList(player).contains(name) && !player.canCommandSenderUseCommand(1, "warp"))
-        {
-            Helper.chat(player, "You don't have access to this warp yet. Visit it first!", RED);
             return false;
         }
         int cost = getCost(player);
@@ -110,8 +109,9 @@ public class WarpPoint implements INBTSerializable<NBTTagCompound>
             Helper.addPlayerXP(player, -cost);
         }
         NBTTagCompound root = new NBTTagCompound();
-        root.setString("name", name);
+        root.setTag("warpPoint", this.serializeNBT());
         root.setInteger("time", 0);
+        root.setBoolean("isBack", isBack);
         player.getEntityData().setTag(MOD_ID, root);
         player.addPotionEffect(new PotionEffect(MobEffects.NAUSEA, WarpShrines.getDelay() + (4 * 20), 3, false, false));
         player.addPotionEffect(new PotionEffect(MobEffects.BLINDNESS, WarpShrines.getDelay() + (2 * 20), 0, false, false));
@@ -148,6 +148,7 @@ public class WarpPoint implements INBTSerializable<NBTTagCompound>
 
     public static WarpPoint fromNBT(NBTTagCompound nbt)
     {
+        if (nbt == null || nbt.hasNoTags()) return null;
         WarpPoint wp = new WarpPoint();
         wp.deserializeNBT(nbt);
         return wp;

@@ -81,12 +81,12 @@ public class WarpPoint implements INBTSerializable<NBTTagCompound>
                 Helper.chat(player, "Some mod prevented this warp.", RED);
                 return;
             }
-            player.worldObj.playSound(null, player.prevPosX, player.prevPosY, player.prevPosZ, SoundEvents.ENTITY_ENDERMEN_TELEPORT, player.getSoundCategory(), 1.0F, 1.0F);
+            player.getServerWorld().playSound(null, player.prevPosX, player.prevPosY, player.prevPosZ, SoundEvents.ENTITY_ENDERMEN_TELEPORT, player.getSoundCategory(), 1.0F, 1.0F);
             player.playSound(SoundEvents.ENTITY_ENDERMEN_TELEPORT, 1.0F, 1.0F);
             //noinspection ConstantConditions
             player.getServer().getPlayerList().transferPlayerToDimension(player, dim, new CustomTeleporter(player.getServerWorld()));
         }
-        player.worldObj.playSound(null, player.prevPosX, player.prevPosY, player.prevPosZ, SoundEvents.ENTITY_ENDERMEN_TELEPORT, player.getSoundCategory(), 1.0F, 1.0F);
+        player.getServerWorld().playSound(null, player.prevPosX, player.prevPosY, player.prevPosZ, SoundEvents.ENTITY_ENDERMEN_TELEPORT, player.getSoundCategory(), 1.0F, 1.0F);
         player.playSound(SoundEvents.ENTITY_ENDERMEN_TELEPORT, 1.0F, 1.0F);
         player.setPositionAndUpdate(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
     }
@@ -117,7 +117,7 @@ public class WarpPoint implements INBTSerializable<NBTTagCompound>
         player.addPotionEffect(new PotionEffect(MobEffects.BLINDNESS, WarpShrines.getDelay() + (2 * 20), 0, false, false));
         player.addPotionEffect(new PotionEffect(MobEffects.SLOWNESS, WarpShrines.getDelay() + (2 * 20), 0, false, false));
 
-        player.worldObj.playSound(null, player.prevPosX, player.prevPosY, player.prevPosZ, SoundEvents.BLOCK_PORTAL_TRIGGER, player.getSoundCategory(), 0.1F, 1.0F);
+        player.getServerWorld().playSound(null, player.prevPosX, player.prevPosY, player.prevPosZ, SoundEvents.BLOCK_PORTAL_TRIGGER, player.getSoundCategory(), 0.1F, 1.0F);
         player.playSound(SoundEvents.BLOCK_PORTAL_TRIGGER, 0.1F, 1.0F);
 
         return true;

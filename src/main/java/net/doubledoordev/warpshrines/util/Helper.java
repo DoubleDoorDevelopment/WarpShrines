@@ -78,44 +78,6 @@ public class Helper
         throw new IllegalArgumentException(dimension + " isn't a valid dimension range.");
     }
 
-    public static String[] shift(String[] s, int n)
-    {
-        if (s == null || s.length < n) return new String[0];
-        String[] s1 = new String[s.length - n];
-        System.arraycopy(s, n, s1, 0, s1.length);
-        return s1;
-    }
-
-    public static void dropItem(EntityPlayer player, ItemStack stack)
-    {
-        final int stackSize = stack.stackSize;
-        boolean flag = player.inventory.addItemStackToInventory(stack);
-
-        if (flag)
-        {
-            player.worldObj.playSound(null, player.posX, player.posY, player.posZ, SoundEvents.ENTITY_ITEM_PICKUP, SoundCategory.PLAYERS, 0.2F, ((player.getRNG().nextFloat() - player.getRNG().nextFloat()) * 0.7F + 1.0F) * 2.0F);
-            player.inventoryContainer.detectAndSendChanges();
-        }
-
-        if (flag && stack.stackSize <= 0)
-        {
-            stack.stackSize = 1;
-            player.setCommandStat(CommandResultStats.Type.AFFECTED_ITEMS, stackSize);
-            EntityItem item = player.dropItem(stack, false);
-            if (item != null) item.makeFakeItem();
-        }
-        else
-        {
-            player.setCommandStat(CommandResultStats.Type.AFFECTED_ITEMS, stackSize - stack.stackSize);
-            EntityItem item = player.dropItem(stack, false);
-            if (item != null)
-            {
-                item.setNoPickupDelay();
-                item.setOwner(player.getName());
-            }
-        }
-    }
-
     public static void addToWarpList(EntityPlayer player, Iterable<String> names)
     {
         NBTTagCompound root = player.getEntityData();
@@ -128,7 +90,7 @@ public class Helper
 
     public static ArrayList<String> getWarpList(EntityPlayer player)
     {
-        if (player.canCommandSenderUseCommand(1, "warp")) return Lists.newArrayList(WarpSavedData.get(player).getAllNames());
+        if (player.canUseCommand(1, "warp")) return Lists.newArrayList(WarpSavedData.get(player).getAllNames());
         NBTTagList list = player.getEntityData().getCompoundTag(EntityPlayer.PERSISTED_NBT_TAG).getTagList(Constants.MOD_ID, NBT.TAG_STRING);
         ArrayList<String> out = new ArrayList<String>();
         for (int i = 0; i < list.tagCount(); i++) out.add(list.getStringTagAt(i));
@@ -167,12 +129,12 @@ public class Helper
 
     public static void chat(ICommandSender target, String message)
     {
-        target.addChatMessage(new TextComponentString(message));
+        target.sendMessage(new TextComponentString(message));
     }
 
     public static void chat(ICommandSender target, String message, TextFormatting color)
     {
-        target.addChatMessage(new TextComponentString(message).setStyle(new Style().setColor(color)));
+        target.sendMessage(new TextComponentString(message).setStyle(new Style().setColor(color)));
     }
 
     private static NBTTagCompound getBackTagParent(EntityPlayer player)

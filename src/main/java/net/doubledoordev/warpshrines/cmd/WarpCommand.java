@@ -49,13 +49,13 @@ import static net.minecraft.util.text.TextFormatting.RED;
 public class WarpCommand extends CommandBase
 {
     @Override
-    public String getCommandName()
+    public String getName()
     {
         return "warp";
     }
 
     @Override
-    public String getCommandUsage(ICommandSender sender)
+    public String getUsage(ICommandSender sender)
     {
         return "Use '/warp help' for more info.";
     }
@@ -67,9 +67,9 @@ public class WarpCommand extends CommandBase
     }
 
     @Override
-    public List<String> getTabCompletionOptions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos pos)
+    public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos pos)
     {
-        if (isUsernameIndex(args, args.length - 1)) return getListOfStringsMatchingLastWord(args, server.getAllUsernames());
+        if (isUsernameIndex(args, args.length - 1)) return getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames());
         else if (args.length == 1) return getListOfStringsMatchingLastWord(args, "help", "go", "back", "cost", "list", "make", "remove");
         else if (args.length == 2)
         {
@@ -88,7 +88,7 @@ public class WarpCommand extends CommandBase
                 return getListOfStringsMatchingLastWord(args, "true", "false");
             }
         }
-        return super.getTabCompletionOptions(server, sender, args, pos);
+        return super.getTabCompletions(server, sender, args, pos);
     }
 
     @Override
@@ -108,7 +108,7 @@ public class WarpCommand extends CommandBase
     private void displayHelp(ICommandSender sender)
     {
         for (String s : new String[]{
-                TextFormatting.AQUA + getCommandName() + " sub command help:",
+                TextFormatting.AQUA + getName() + " sub command help:",
                 TextFormatting.GREEN + "ProTip: Use TAB to auto complete a command or warp name!",
                 "- help: Display this text.",
                 "- go [name...]: Warp to a point.",
@@ -117,14 +117,14 @@ public class WarpCommand extends CommandBase
                 "- list: List of warps you have access to.",
                 "- make [free?] [name...]: Make a new warp [OP]",
                 "- remove [name...]: Remove a warp [OP]",
-        }) sender.addChatMessage(new TextComponentString(s));
+        }) sender.sendMessage(new TextComponentString(s));
     }
 
     private void doGo(ICommandSender sender, String[] args) throws CommandException
     {
         WarpPoint wp = WarpSavedData.get(sender).get(getName(sender, args, 1));
         if (wp == null) throw new CommandException("No warp by that name :(");
-        // canCommandSenderUseCommand because it does SSP check too
+        // canUseCommand because it does SSP check too
         if (Helper.getWarpList(getCommandSenderAsPlayer(sender)).contains(wp.getName()))
             wp.queueTeleport(getCommandSenderAsPlayer(sender), false);
         else
@@ -159,27 +159,27 @@ public class WarpCommand extends CommandBase
 
     private void doList(ICommandSender sender, String[] args) throws CommandException
     {
-        boolean op = sender.canCommandSenderUseCommand(1, getCommandName());
+        boolean op = sender.canUseCommand(1, getName());
         Helper.chat(sender, op ? "All warps:" : "List of warps you have access too:", TextFormatting.AQUA);
         for (String s : Helper.getWarpList(getCommandSenderAsPlayer(sender)))
         {
             WarpPoint wp = WarpSavedData.get(sender).get(s);
-            sender.addChatMessage(new TextComponentString(wp.getName() + (wp.isFree() ? " (free)" : (" (" + wp.getCost(getCommandSenderAsPlayer(sender)) + " xp)"))));
+            sender.sendMessage(new TextComponentString(wp.getName() + (wp.isFree() ? " (free)" : (" (" + wp.getCost(getCommandSenderAsPlayer(sender)) + " xp)"))));
         }
     }
 
     private void doMake(ICommandSender sender, String[] args) throws CommandException
     {
-        if (!sender.canCommandSenderUseCommand(1, getCommandName())) throw new CommandException("Permission denied.");
+        if (!sender.canUseCommand(1, getName())) throw new CommandException("Permission denied.");
         if (!WarpSavedData.get(sender).add(new WarpPoint(getCommandSenderAsPlayer(sender), getName(sender, args, 2), parseBoolean(args[1])))) throw new CommandException("Warp name already exists");
-        sender.addChatMessage(new TextComponentString("Warp added!"));
+        sender.sendMessage(new TextComponentString("Warp added!"));
     }
 
     private void doRemove(ICommandSender sender, String[] args) throws CommandException
     {
-        if (!sender.canCommandSenderUseCommand(1, getCommandName())) throw new CommandException("Permission denied.");
+        if (!sender.canUseCommand(1, getName())) throw new CommandException("Permission denied.");
         if (!WarpSavedData.get(sender).remove(getName(sender, args, 1))) throw new CommandException("Warp name did not exist");
-        sender.addChatMessage(new TextComponentString("Warp removed!"));
+        sender.sendMessage(new TextComponentString("Warp removed!"));
     }
 
     private String getName(ICommandSender sender, String[] args, int offset) throws CommandException
@@ -188,51 +188,4 @@ public class WarpCommand extends CommandBase
         if (Strings.isNullOrEmpty(name)) throw new CommandException("You must provide a warp name");
         return name;
     }
-
-//
-//    private void doBook(ICommandSender sender, String[] args) throws CommandException
-//    {
-//        EntityPlayer player = getCommandSenderAsPlayer(sender);
-//
-//        Book book = new Book("Book 'o Warps");
-//
-//        Page index = new Page(book);
-//
-//        Multimap<Integer, WarpPoint> dimToWarpMap = HashMultimap.create();
-//        for (WarpPoint wp : WarpSavedData.get(sender).getAllWarpPoints()) dimToWarpMap.put(wp.getDim(), wp);
-//
-//        for (Integer dim : dimToWarpMap.keySet())
-//        {
-//            Page dimPage = new Page(book).add(TextFormatting.GRAY + "Dimension " + dim + "\n");
-//            index.add(new TextComponentString("-> Dimension " + dim).setStyle(new Style()
-//                    .setClickEvent(new ClickEvent(ClickEvent.Action.CHANGE_PAGE, String.valueOf(book.getSize())))));
-//            List<WarpPoint> warpPoints = new ArrayList<WarpPoint>(dimToWarpMap.get(dim));
-//            Collections.sort(warpPoints);
-//            for (WarpPoint wp : warpPoints)
-//            {
-//
-//                ITextComponent wpText = new TextComponentString("").setStyle(new Style()
-//                        .setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/warp go " + wp.getUuid()))
-//                        .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponentString("Click to queueTeleport"))));
-//                wpText.appendText(wp.getName()).appendText("\nBy ").appendSibling(wp.getCreatorComponent(sender.getServer()));
-//                wpText.appendText("\n");
-//                dimPage.add(wpText);
-//            }
-//        }
-//
-//        ItemStack stack = null;
-//        for (final ItemStack heldStack : player.getHeldEquipment())
-//        {
-//            if (!Book.isBook(heldStack)) continue;
-//            stack = heldStack;
-//            break;
-//        }
-//        if (stack == null)
-//        {
-//            stack = new ItemStack(Items.WRITTEN_BOOK);
-//            Helper.dropItem(player, stack);
-//        }
-//        book.writeTo(stack);
-//        player.addChatComponentMessage(new TextComponentString("Warp book updated!"));
-//    }
 }

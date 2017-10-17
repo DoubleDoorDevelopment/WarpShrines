@@ -31,7 +31,7 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
-import net.minecraft.world.WorldSavedData;
+import net.minecraft.world.storage.WorldSavedData;
 import net.minecraftforge.common.util.Constants.NBT;
 
 import java.util.*;
@@ -145,11 +145,11 @@ public class WarpSavedData extends WorldSavedData
 
     public static WarpSavedData get(World world)
     {
-        WarpSavedData data = (WarpSavedData) world.loadItemData(WarpSavedData.class, Constants.MOD_ID);
+        WarpSavedData data = (WarpSavedData) world.loadData(WarpSavedData.class, Constants.MOD_ID);
         if (data == null)
         {
             data = new WarpSavedData(Constants.MOD_ID);
-            world.setItemData(Constants.MOD_ID, data);
+            world.setData(Constants.MOD_ID, data);
         }
         return data;
     }

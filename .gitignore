@@ -1,4 +1,6 @@
 .idea/
+*.iml
+*.ipr
 run/
 WarpShrines.json
 
